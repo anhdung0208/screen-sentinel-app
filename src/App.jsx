@@ -46,15 +46,19 @@ export default function App() {
     settings,
   });
 
-  const handleAddZone = (rect) => {
+  const handleAddZone = (rect, drawType = 'alert') => {
+    const isIgnore = drawType === 'ignore';
+    const ignoreCount = zones.filter((z) => z.mode === 'ignore_detect').length + 1;
+    const alertCount = zones.filter((z) => z.mode !== 'ignore_detect').length + 1;
+
     const newZone = {
       id: 'zone_' + Date.now(),
-      name: 'Vung #' + (zones.length + 1),
+      name: isIgnore ? `Bỏ qua #${ignoreCount}` : `Vùng #${alertCount}`,
       x: rect.x,
       y: rect.y,
       width: rect.width,
       height: rect.height,
-      mode: 'red_detect',
+      mode: isIgnore ? 'ignore_detect' : 'red_detect',
       redThreshold: 0.1,
       diffThreshold: 5,
       baselineData: null,
