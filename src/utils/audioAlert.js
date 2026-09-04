@@ -1,4 +1,4 @@
-// Web Audio API Sound Generator
+// Web Audio API & Speech Synthesis Sound Generator
 class SoundAlertManager {
   constructor() {
     this.audioCtx = null;
@@ -114,10 +114,36 @@ class SoundAlertManager {
     }
   }
 
-  // Phát âm thanh báo động
-  playSound(type = 'chime', volume = 0.8) {
+  // 4. Giọng nói Tiếng Việt phát âm đọc tên vị trí lỗi (Web Speech API)
+  speakText(text, volume = 0.8) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'vi-VN';
+      utterance.volume = Math.max(0.1, Math.min(volume, 1.0));
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('Speech synthesis error:', e);
+    }
+  }
+
+  // Phát âm thanh hoặc Đọc Giọng nói vị trí
+  playSound(type = 'voice', volume = 0.8, locationText = '') {
     this.initContext();
-    if (type === 'siren') {
+
+    if (type === 'voice') {
+      const textToSpeak = locationText
+        ? `Cảnh báo sự cố tại ${locationText}`
+        : 'Cảnh báo phát hiện sự cố';
+      
+      this.playChime(volume);
+      setTimeout(() => {
+        this.speakText(textToSpeak, volume);
+      }, 350);
+    } else if (type === 'siren') {
       this.playSiren(2500, volume);
     } else if (type === 'beep') {
       this.playBeep(4, 900, volume);

@@ -46,6 +46,7 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
         zone.lastStatus = 'normal';
         zone.currentRatio = 0;
         zone.currentPixels = 0;
+        zone.detectedLocations = [];
         return;
       }
 
@@ -57,7 +58,7 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
         0, 0, zone.width, zone.height
       );
 
-      let result = { isAlert: false, message: '', ratio: 0, redPixels: 0 };
+      let result = { isAlert: false, message: '', ratio: 0, redPixels: 0, alertLocations: [], locationText: '' };
 
       if (zone.mode === 'red_detect') {
         result = analyzeRedDominance(ctx, zone, exclusionZones, zone.redThreshold);
@@ -71,6 +72,7 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
 
       zone.currentRatio = result.ratio;
       zone.currentPixels = result.redPixels;
+      zone.detectedLocations = result.alertLocations || [];
 
       if (result.isAlert) {
         zone.lastStatus = 'alert';
@@ -81,10 +83,13 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
         // Tình huống 2: Phát hiện có thêm icon lỗi mới xuất hiện ở vị trí khác (Số pixel đỏ tăng > 40px)
         const isSignificantIncrease = (result.redPixels - prevPixels) > 40;
 
+        const speakLocationName = result.locationText || zone.name;
+
         handleTriggerAlert(
           zone,
           result.message,
           canvas.toDataURL('image/jpeg', 0.85),
+          speakLocationName,
           isNewAlertTransition || isSignificantIncrease
         );
       } else {
@@ -103,7 +108,7 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
     }
   };
 
-  const handleTriggerAlert = (zone, reason, snapshot, forceAlert = false) => {
+  const handleTriggerAlert = (zone, reason, snapshot, locationText = '', forceAlert = false) => {
     const now = Date.now();
     const lastTime = lastAlertTimes.current[zone.id] || 0;
     const cooldownMs = (settings.cooldownMin || 5) * 60 * 1000;
@@ -112,22 +117,22 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
     if (!forceAlert && now - lastTime < cooldownMs) return;
     lastAlertTimes.current[zone.id] = now;
 
-    // Phát âm thanh báo động (Chime, Siren, Beep)
-    soundManager.playSound(settings.soundType || 'chime', (settings.volume || 80) / 100);
+    // Phát âm thanh hoặc ĐỌC GIỌNG NÓI ĐỌC TÊN VỊ TRÍ LỖI CỤ THỂ
+    soundManager.playSound(settings.soundType || 'voice', (settings.volume || 80) / 100, locationText || zone.name);
 
     // Toast cảnh báo
-    toast.error(`\u{1F6A8} ${zone.name}: ${reason}`, { duration: 5000 });
+    toast.error(`\u{1F6A8} ${locationText || zone.name}: ${reason}`, { duration: 5000 });
 
     // Browser notification
     if (Notification.permission === 'granted') {
-      new Notification(`\u{1F6A8} BÁO ĐỘNG: ${zone.name}`, { body: reason });
+      new Notification(`\u{1F6A8} BÁO ĐỘNG: ${locationText || zone.name}`, { body: reason });
     }
 
     // Lưu lịch sử sự cố
     const newIncident = {
       id: Date.now(),
       time: new Date().toLocaleTimeString(),
-      zoneName: zone.name,
+      zoneName: locationText || zone.name,
       reason,
       snapshot,
     };

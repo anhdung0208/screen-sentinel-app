@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Trash2, Camera, ToggleLeft, ToggleRight, Info, EyeOff } from 'lucide-react';
+import { Layers, Trash2, Camera, ToggleLeft, ToggleRight, Info, EyeOff, MapPin } from 'lucide-react';
 
 export default function ZoneList({ zones, setZones, onCaptureBaseline }) {
   const removeZone = (id) => {
@@ -133,9 +133,9 @@ export default function ZoneList({ zones, setZones, onCaptureBaseline }) {
                   </div>
                 </div>
 
-                {/* Hàng 3: Hiển thị chỉ số thực tế theo thời gian thực */}
+                {/* Hàng 3: Hiển thị chỉ số thực tế + Vị trí bị lỗi detected */}
                 {zone.enabled && !isIgnore && (
-                  <div className="mt-2.5 pt-2 border-t border-slate-700/60 bg-slate-950/40 p-2 rounded-lg">
+                  <div className="mt-2.5 pt-2 border-t border-slate-700/60 bg-slate-950/40 p-2 rounded-lg space-y-1.5">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-slate-400">
                         {zone.mode === 'red_detect' ? 'Đã tìm thấy:' : 'Mức độ biến đổi:'}
@@ -152,8 +152,16 @@ export default function ZoneList({ zones, setZones, onCaptureBaseline }) {
                       </span>
                     </div>
 
+                    {/* Vị trí bị lỗi được phát hiện */}
+                    {zone.detectedLocations && zone.detectedLocations.length > 0 && (
+                      <div className="flex items-center gap-1 text-[11px] text-rose-300 font-medium">
+                        <MapPin className="w-3 h-3 text-rose-400 flex-shrink-0" />
+                        <span>Lỗi tại: <b>{zone.detectedLocations.join(', ')}</b></span>
+                      </div>
+                    )}
+
                     {/* Meter Bar */}
-                    <div className="w-full bg-slate-950 rounded-full h-1.5 mt-1.5 overflow-hidden border border-slate-800">
+                    <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
                           zone.lastStatus === 'alert' ? 'bg-rose-500' : 'bg-emerald-500'
@@ -179,7 +187,7 @@ export default function ZoneList({ zones, setZones, onCaptureBaseline }) {
       <div className="mt-3 p-2.5 bg-indigo-950/30 border border-indigo-900/50 rounded-xl text-[11px] text-indigo-300 flex items-start gap-2">
         <Info className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
         <span>
-          <b>Cách dùng Vùng Loại Trừ:</b> Vẽ 1 vùng đè lên nút/icon không muốn báo động, chọn chế độ <b>🚫 Vùng Loại trừ</b>. Các điểm ảnh trong vùng này sẽ bị bỏ qua hoàn toàn.
+          <b>Tự động đọc 5 Vị trí:</b> Chỉ cần vẽ 1 vùng lớn bao phủ cả 5 tab, hệ thống sẽ tự phát hiện icon đỏ nằm ở vị trí nào và đọc chính xác tên vị trí đó!
         </span>
       </div>
     </div>
