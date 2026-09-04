@@ -1,6 +1,13 @@
 /**
- * Thuật toán phát hiện màu ĐỎ, so sánh ảnh, và loại trừ vùng không cần thiết
+ * Thuật toán phân tích ảnh & loại trừ vùng (Exclusion Zone)
  */
+
+// Hàm kiểm tra chính xác pixel màu ĐỎ (🔴), phân biệt rõ với màu VÀNG/CAM (⚠️)
+export function isTrueRedPixel(r, g, b) {
+  // Màu đỏ chuẩn: R cao (> 130), G thấp (< 115), R áp đảo cả G và B ít nhất 60 đơn vị
+  // Màu vàng/cam có G rất cao (G > 130) nên sẽ bị loại bỏ hoàn toàn
+  return r > 130 && g < 115 && (r - g) > 60 && (r - b) > 60;
+}
 
 // Kiểm tra xem 1 tọa độ pixel có nằm trong Vùng Loại Trừ (Exclusion Zone) nào không
 function isPixelExcluded(videoX, videoY, exclusionZones = []) {
@@ -43,8 +50,8 @@ export function analyzeRedDominance(ctx, zone, exclusionZones = [], thresholdPer
       const g = data[i + 1];
       const b = data[i + 2];
 
-      // Điều kiện màu ĐỎ linh hoạt: R > 110 và vượt trội hơn G, B
-      if (r > 110 && (r - g) > 28 && (r - b) > 28) {
+      // Sử dụng hàm lọc màu ĐỎ chuẩn
+      if (isTrueRedPixel(r, g, b)) {
         redPixels++;
       }
     }

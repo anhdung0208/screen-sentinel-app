@@ -149,8 +149,8 @@ export default function ScreenViewer({
             <button
               onClick={() => setActiveDrawType('alert')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${activeDrawType === 'alert'
-                  ? 'bg-rose-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                ? 'bg-rose-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white'
                 }`}
             >
               <ShieldAlert className="w-3.5 h-3.5" /> Vẽ Vùng Cảnh Báo Lỗi
@@ -158,8 +158,8 @@ export default function ScreenViewer({
             <button
               onClick={() => setActiveDrawType('ignore')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${activeDrawType === 'ignore'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white'
                 }`}
             >
               <ShieldOff className="w-3.5 h-3.5" /> Vẽ Vùng Bỏ Qua (Không Quét)
