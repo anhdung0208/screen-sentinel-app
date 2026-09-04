@@ -1,0 +1,23 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Dependencies & Build
+node_modules
+dist
+dist-ssr
+*.local
+
+# Scratch & Generator scripts
+*.cjs
+write.ps1
+files.json
+generate.js
+
+# Editor files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
