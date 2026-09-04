@@ -33,7 +33,6 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
       const video = videoRef.current;
       const canvas = processCanvasRef.current;
 
-      // Đảm bảo video đang phát và có khung hình hợp lệ
       if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return;
 
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -55,7 +54,6 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
           return;
         }
 
-        // Đảm bảo chiều rộng & chiều cao zone hợp lệ > 0
         if (zone.width <= 0 || zone.height <= 0) return;
 
         canvas.width = zone.width;
@@ -77,6 +75,8 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
         const prevStatus = zone.lastStatus;
         const prevRatio = zone.currentRatio;
         const prevPixels = zone.currentPixels || 0;
+        const prevLocations = (zone.detectedLocations || []).join(',');
+        const currentLocations = (result.alertLocations || []).join(',');
 
         zone.currentRatio = result.ratio;
         zone.currentPixels = result.redPixels;
@@ -88,8 +88,11 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
           // Tình huống 1: Mới xuất hiện sự cố (Chuyển từ Bình thường -> Báo động)
           const isNewAlertTransition = prevStatus !== 'alert';
 
-          // Tình huống 2: Phát hiện có thêm icon lỗi mới xuất hiện ở vị trí khác (Số pixel đỏ tăng > 40px)
-          const isSignificantIncrease = (result.redPixels - prevPixels) > 40;
+          // Tình huống 2: Vị trí bị lỗi ĐÃ THAY ĐỔI hoặc có thêm vị trí mới bị lỗi (VD: Từ Full Warehouse sang Tornado)
+          const isLocationChanged = prevLocations !== currentLocations && currentLocations !== '';
+
+          // Tình huống 3: Số lượng pixel đỏ tăng đáng kể (> 30px)
+          const isSignificantIncrease = (result.redPixels - prevPixels) > 30;
 
           const speakLocationName = result.locationText || zone.name;
 
@@ -98,7 +101,7 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
             result.message,
             canvas.toDataURL('image/jpeg', 0.85),
             speakLocationName,
-            isNewAlertTransition || isSignificantIncrease
+            isNewAlertTransition || isLocationChanged || isSignificantIncrease
           );
         } else {
           zone.lastStatus = 'normal';
@@ -106,7 +109,12 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
           lastAlertTimes.current[zone.id] = 0;
         }
 
-        if (prevStatus !== zone.lastStatus || Math.abs((prevRatio || 0) - result.ratio) > 0.01 || prevPixels !== result.redPixels) {
+        if (
+          prevStatus !== zone.lastStatus ||
+          Math.abs((prevRatio || 0) - result.ratio) > 0.01 ||
+          prevPixels !== result.redPixels ||
+          prevLocations !== currentLocations
+        ) {
           updated = true;
         }
       });
@@ -124,7 +132,7 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
     const lastTime = lastAlertTimes.current[zone.id] || 0;
     const cooldownMs = (settings.cooldownMin || 5) * 60 * 1000;
 
-    // Nếu KHÔNG phải sự cố mới VÀ vẫn đang trong thời gian Cooldown -> tạm ngưng kêu lặp lại
+    // Nếu KHÔNG phải sự cố mới/vị trí mới VÀ vẫn đang trong thời gian Cooldown -> tạm ngưng kêu lặp lại
     if (!forceAlert && now - lastTime < cooldownMs) return;
     lastAlertTimes.current[zone.id] = now;
 
