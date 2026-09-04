@@ -14,7 +14,6 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
 
   useEffect(() => {
     if (isTracking && isCapturing) {
-      // Quét ngay lập tức 1 lần đầu tiên khi bấm Bắt đầu tracking
       runDetection();
 
       intervalRef.current = setInterval(() => {
@@ -68,16 +67,30 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
 
       const prevStatus = zone.lastStatus;
       const prevRatio = zone.currentRatio;
-      const prevPixels = zone.currentPixels;
+      const prevPixels = zone.currentPixels || 0;
 
       zone.currentRatio = result.ratio;
       zone.currentPixels = result.redPixels;
 
       if (result.isAlert) {
         zone.lastStatus = 'alert';
-        handleTriggerAlert(zone, result.message, canvas.toDataURL('image/jpeg', 0.85));
+
+        // Tình huống 1: Mới xuất hiện sự cố (Chuyển từ Bình thường -> Báo động)
+        const isNewAlertTransition = prevStatus !== 'alert';
+
+        // Tình huống 2: Phát hiện có thêm icon lỗi mới xuất hiện ở vị trí khác (Số pixel đỏ tăng > 40px)
+        const isSignificantIncrease = (result.redPixels - prevPixels) > 40;
+
+        handleTriggerAlert(
+          zone,
+          result.message,
+          canvas.toDataURL('image/jpeg', 0.85),
+          isNewAlertTransition || isSignificantIncrease // Bắt buộc phát còi nếu là sự cố mới
+        );
       } else {
         zone.lastStatus = 'normal';
+        // Khi vùng đã quay về Bình thường, xoá thời gian cooldown cũ để lần lỗi tiếp theo báo ngay!
+        lastAlertTimes.current[zone.id] = 0;
       }
 
       if (prevStatus !== zone.lastStatus || Math.abs((prevRatio || 0) - result.ratio) > 0.01 || prevPixels !== result.redPixels) {
@@ -90,16 +103,16 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
     }
   };
 
-  const handleTriggerAlert = (zone, reason, snapshot) => {
+  const handleTriggerAlert = (zone, reason, snapshot, forceAlert = false) => {
     const now = Date.now();
     const lastTime = lastAlertTimes.current[zone.id] || 0;
     const cooldownMs = (settings.cooldownMin || 5) * 60 * 1000;
 
-    // Kiểm tra thời gian trì hoãn báo lại (Cooldown)
-    if (now - lastTime < cooldownMs) return;
+    // Nếu KHÔNG phải sự cố mới VÀ vẫn đang trong thời gian Cooldown -> tạm ngưng kêu lặp lại
+    if (!forceAlert && now - lastTime < cooldownMs) return;
     lastAlertTimes.current[zone.id] = now;
 
-    // Phát âm thanh báo động theo cài đặt (Chime, Siren, Beep)
+    // Phát âm thanh báo động theo cài đặt
     soundManager.playSound(settings.soundType || 'chime', (settings.volume || 80) / 100);
 
     // Toast cảnh báo
