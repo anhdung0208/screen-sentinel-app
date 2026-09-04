@@ -18,7 +18,35 @@ class SoundAlertManager {
     }
   }
 
-  // 1. Âm thanh Chuông ngân nhẹ nhàng (Chime / Bell)
+  // 1. Tiếng chuông 'Ding!' nhẹ nhàng 1 cái làm tín hiệu báo hiệu
+  playDing(volume = 0.8) {
+    this.initContext();
+    if (!this.audioCtx) return;
+
+    const ctx = this.audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const vol = Math.max(0.1, Math.min(volume, 1.0));
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now); // Nốt La (A5) trong trẻo
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(vol * 0.7, now + 0.03);
+    gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.55);
+  }
+
+  // 2. Âm thanh Chuông ngân 3 nốt (Chime / Bell)
   playChime(volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -51,7 +79,7 @@ class SoundAlertManager {
     });
   }
 
-  // 2. Còi hú báo động công nghiệp (Siren)
+  // 3. Còi hú báo động công nghiệp (Siren)
   playSiren(durationMs = 2500, volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -83,7 +111,7 @@ class SoundAlertManager {
     osc.stop(now + durationMs / 1000);
   }
 
-  // 3. Tiếng Beep ngắt quãng (Rõ tiếng & Đậm âm)
+  // 4. Tiếng Beep ngắt quãng (Rõ tiếng & Đậm âm)
   playBeep(count = 4, freq = 900, volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -114,12 +142,11 @@ class SoundAlertManager {
     }
   }
 
-  // 4. Giọng nói Tiếng Việt đọc tên vị trí lỗi (Web Speech API)
+  // 5. Giọng nói Tiếng Việt đọc tên vị trí lỗi (Web Speech API)
   speakText(text, volume = 0.8) {
     if (!('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
-      // Chrome/Edge cần khoảng trễ 50ms sau cancel() trước khi đọc câu mới
       setTimeout(() => {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'vi-VN';
@@ -133,19 +160,22 @@ class SoundAlertManager {
     }
   }
 
-  // Phát âm thanh hoặc Đọc Giọng nói vị trí
+  // Phát âm thanh theo loại lựa chọn
   playSound(type = 'voice', volume = 0.8, locationText = '') {
     this.initContext();
 
-    if (type === 'voice') {
+    if (type === 'voice' || type === 'voice_ding') {
       const textToSpeak = locationText
         ? `Cảnh báo sự cố tại ${locationText}`
         : 'Cảnh báo phát hiện sự cố';
       
-      this.playChime(volume);
+      // Reo 1 tiếng chuông 'Ding!' nhẹ trước
+      this.playDing(volume);
+
+      // Chờ 450ms cho tiếng chuông dứt hẳn rồi mới đọc tên vị trí
       setTimeout(() => {
         this.speakText(textToSpeak, volume);
-      }, 350);
+      }, 450);
     } else if (type === 'siren') {
       this.playSiren(2500, volume);
     } else if (type === 'beep') {
