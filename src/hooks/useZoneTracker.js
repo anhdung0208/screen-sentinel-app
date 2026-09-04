@@ -85,7 +85,7 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
           zone,
           result.message,
           canvas.toDataURL('image/jpeg', 0.85),
-          isNewAlertTransition || isSignificantIncrease // Bắt buộc phát còi nếu là sự cố mới
+          isNewAlertTransition || isSignificantIncrease
         );
       } else {
         zone.lastStatus = 'normal';
@@ -112,8 +112,8 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
     if (!forceAlert && now - lastTime < cooldownMs) return;
     lastAlertTimes.current[zone.id] = now;
 
-    // Phát âm thanh báo động theo cài đặt
-    soundManager.playSound(settings.soundType || 'chime', (settings.volume || 80) / 100);
+    // Phát âm thanh hoặc ĐỌC GIỌNG NÓI ĐỌC TÊN VỊ TRÍ LỖI
+    soundManager.playSound(settings.soundType || 'voice', (settings.volume || 80) / 100, zone.name);
 
     // Toast cảnh báo
     toast.error(`\u{1F6A8} ${zone.name}: ${reason}`, { duration: 5000 });

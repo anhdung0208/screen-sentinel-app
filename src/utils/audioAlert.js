@@ -1,4 +1,4 @@
-// Web Audio API Sound Generator
+// Web Audio API & Speech Synthesis Sound Generator
 class SoundAlertManager {
   constructor() {
     this.audioCtx = null;
@@ -15,14 +15,13 @@ class SoundAlertManager {
     }
   }
 
-  // 1. Am thanh Chuong ngan nhang (Chime / Bell) - Dễ nghe & Nhẹ nhàng
+  // 1. Âm thanh Chuông ngân nhẹ nhàng (Chime / Bell)
   playChime(volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
 
     const ctx = this.audioCtx;
     const now = ctx.currentTime;
-    // Hop am 3 not: C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
     const notes = [523.25, 659.25, 784.0, 1046.5];
 
     notes.forEach((freq, index) => {
@@ -46,7 +45,7 @@ class SoundAlertManager {
     });
   }
 
-  // 2. Coi hu bao dong (Siren)
+  // 2. Còi hú báo động (Siren)
   playSiren(durationMs = 2500, volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -79,7 +78,7 @@ class SoundAlertManager {
     }, durationMs);
   }
 
-  // 3. Tieng Beep ngat quang
+  // 3. Tiếng Beep ngắt quãng
   playBeep(count = 3, freq = 880, volume = 0.4) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -104,9 +103,34 @@ class SoundAlertManager {
     }
   }
 
-  // Phat am thanh theo loai lua chon
-  playSound(type = 'chime', volume = 0.8) {
-    if (type === 'siren') {
+  // 4. Giọng nói Tiếng Việt phát âm đọc tên vị trí lỗi (Web Speech API)
+  speakText(text, volume = 0.8) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'vi-VN';
+      utterance.volume = volume;
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('Speech synthesis error:', e);
+    }
+  }
+
+  // Phát âm thanh hoặc Giọng nói đọc tên vị trí
+  playSound(type = 'voice', volume = 0.8, zoneName = '') {
+    if (type === 'voice' || type === 'voice_chime') {
+      const locationText = zoneName
+        ? `Cảnh báo sự cố tại ${zoneName}`
+        : 'Cảnh báo phát hiện sự cố';
+      
+      this.playChime(volume * 0.5);
+      setTimeout(() => {
+        this.speakText(locationText, volume);
+      }, 350);
+    } else if (type === 'siren') {
       this.playSiren(2500, volume);
     } else if (type === 'beep') {
       this.playBeep(3, 880, volume);
