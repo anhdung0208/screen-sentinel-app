@@ -8,6 +8,7 @@ import IncidentLogs from './components/IncidentLogs';
 import TestSimulator from './components/TestSimulator';
 import { useScreenCapture } from './hooks/useScreenCapture';
 import { useZoneTracker } from './hooks/useZoneTracker';
+import { soundManager } from './utils/audioAlert';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(
@@ -23,6 +24,15 @@ export default function App() {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('hashchange', handlePopState);
     };
+  }, []);
+
+  // Unlock AudioContext khi người dùng click bất kỳ đâu trên trang
+  useEffect(() => {
+    const unlockAudio = () => {
+      soundManager.initContext();
+    };
+    window.addEventListener('click', unlockAudio);
+    return () => window.removeEventListener('click', unlockAudio);
   }, []);
 
   const { stream, isCapturing, videoRef, startCapture, stopCapture } = useScreenCapture();
