@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Monitor, Play, Square } from 'lucide-react';
+import { ShieldAlert, Monitor, Play, Square, FlaskConical } from 'lucide-react';
 
 export default function Header({
   isCapturing,
@@ -7,6 +7,7 @@ export default function Header({
   onStartCapture,
   onStopCapture,
   onToggleTracking,
+  onOpenTestPage,
 }) {
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between">
@@ -28,6 +29,14 @@ export default function Header({
       </div>
 
       <div className="flex items-center gap-3">
+        <button
+          onClick={onOpenTestPage}
+          className="flex items-center gap-1.5 px-3 py-2 bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 rounded-xl text-xs font-semibold transition cursor-pointer"
+          title="Mở trang giả lập để test chuyển icon Vàng/Đỏ"
+        >
+          <FlaskConical className="w-4 h-4 text-indigo-400" /> Trang Test Giả Lập (/test)
+        </button>
+
         {!isCapturing ? (
           <button
             onClick={onStartCapture}

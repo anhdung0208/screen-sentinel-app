@@ -5,10 +5,19 @@ import ScreenViewer from './components/ScreenViewer';
 import ZoneList from './components/ZoneList';
 import SettingsPanel from './components/SettingsPanel';
 import IncidentLogs from './components/IncidentLogs';
+import TestSimulator from './components/TestSimulator';
 import { useScreenCapture } from './hooks/useScreenCapture';
 import { useZoneTracker } from './hooks/useZoneTracker';
 
 export default function App() {
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => setCurrentPath(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const { stream, isCapturing, videoRef, startCapture, stopCapture } = useScreenCapture();
 
   const [zones, setZones] = useState([]);
@@ -45,6 +54,11 @@ export default function App() {
     setZones,
     settings,
   });
+
+  // Neu dang o duong dan /test thi hien thi trang TestSimulator
+  if (currentPath === '/test') {
+    return <TestSimulator />;
+  }
 
   const handleAddZone = (rect, drawType = 'alert') => {
     const isIgnore = drawType === 'ignore';
@@ -103,6 +117,7 @@ export default function App() {
         onStartCapture={startCapture}
         onStopCapture={stopCapture}
         onToggleTracking={() => setIsTracking(!isTracking)}
+        onOpenTestPage={() => window.open('/test', '_blank')}
       />
 
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 p-6 max-w-[1800px] w-full mx-auto">
