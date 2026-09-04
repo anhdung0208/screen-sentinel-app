@@ -28,83 +28,94 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
   }, [isTracking, isCapturing, zones, settings, scanIntervalMs]);
 
   const runDetection = () => {
-    if (!videoRef.current || !processCanvasRef.current) return;
-    const video = videoRef.current;
-    const canvas = processCanvasRef.current;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    try {
+      if (!videoRef.current || !processCanvasRef.current) return;
+      const video = videoRef.current;
+      const canvas = processCanvasRef.current;
 
-    let updated = false;
+      // Đảm bảo video đang phát và có khung hình hợp lệ
+      if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    // Lọc danh sách các Vùng Loại Trừ đang bật
-    const exclusionZones = zones.filter((z) => z.enabled && z.mode === 'ignore_detect');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-    zones.forEach((zone) => {
-      if (!zone.enabled) return;
+      let updated = false;
 
-      // Bỏ qua Vùng Loại Trừ khi tính điểm ảnh
-      if (zone.mode === 'ignore_detect') {
-        zone.lastStatus = 'normal';
-        zone.currentRatio = 0;
-        zone.currentPixels = 0;
-        zone.detectedLocations = [];
-        return;
-      }
+      // Lọc danh sách các Vùng Loại Trừ đang bật
+      const exclusionZones = zones.filter((z) => z.enabled && z.mode === 'ignore_detect');
 
-      canvas.width = zone.width;
-      canvas.height = zone.height;
-      ctx.drawImage(
-        video,
-        zone.x, zone.y, zone.width, zone.height,
-        0, 0, zone.width, zone.height
-      );
+      zones.forEach((zone) => {
+        if (!zone.enabled) return;
 
-      let result = { isAlert: false, message: '', ratio: 0, redPixels: 0, alertLocations: [], locationText: '' };
+        // Bỏ qua Vùng Loại Trừ khi tính điểm ảnh
+        if (zone.mode === 'ignore_detect') {
+          zone.lastStatus = 'normal';
+          zone.currentRatio = 0;
+          zone.currentPixels = 0;
+          zone.detectedLocations = [];
+          return;
+        }
 
-      if (zone.mode === 'red_detect') {
-        result = analyzeRedDominance(ctx, zone, exclusionZones, zone.redThreshold);
-      } else if (zone.mode === 'diff_detect') {
-        result = analyzeImageDifference(ctx, zone, zone.baselineData, exclusionZones, zone.diffThreshold);
-      }
+        // Đảm bảo chiều rộng & chiều cao zone hợp lệ > 0
+        if (zone.width <= 0 || zone.height <= 0) return;
 
-      const prevStatus = zone.lastStatus;
-      const prevRatio = zone.currentRatio;
-      const prevPixels = zone.currentPixels || 0;
-
-      zone.currentRatio = result.ratio;
-      zone.currentPixels = result.redPixels;
-      zone.detectedLocations = result.alertLocations || [];
-
-      if (result.isAlert) {
-        zone.lastStatus = 'alert';
-
-        // Tình huống 1: Mới xuất hiện sự cố (Chuyển từ Bình thường -> Báo động)
-        const isNewAlertTransition = prevStatus !== 'alert';
-
-        // Tình huống 2: Phát hiện có thêm icon lỗi mới xuất hiện ở vị trí khác (Số pixel đỏ tăng > 40px)
-        const isSignificantIncrease = (result.redPixels - prevPixels) > 40;
-
-        const speakLocationName = result.locationText || zone.name;
-
-        handleTriggerAlert(
-          zone,
-          result.message,
-          canvas.toDataURL('image/jpeg', 0.85),
-          speakLocationName,
-          isNewAlertTransition || isSignificantIncrease
+        canvas.width = zone.width;
+        canvas.height = zone.height;
+        ctx.drawImage(
+          video,
+          zone.x, zone.y, zone.width, zone.height,
+          0, 0, zone.width, zone.height
         );
-      } else {
-        zone.lastStatus = 'normal';
-        // Khi vùng đã quay về Bình thường, xoá thời gian cooldown cũ để lần lỗi tiếp theo báo ngay!
-        lastAlertTimes.current[zone.id] = 0;
-      }
 
-      if (prevStatus !== zone.lastStatus || Math.abs((prevRatio || 0) - result.ratio) > 0.01 || prevPixels !== result.redPixels) {
-        updated = true;
-      }
-    });
+        let result = { isAlert: false, message: '', ratio: 0, redPixels: 0, alertLocations: [], locationText: '' };
 
-    if (updated) {
-      setZones([...zones]);
+        if (zone.mode === 'red_detect') {
+          result = analyzeRedDominance(ctx, zone, exclusionZones, zone.redThreshold);
+        } else if (zone.mode === 'diff_detect') {
+          result = analyzeImageDifference(ctx, zone, zone.baselineData, exclusionZones, zone.diffThreshold);
+        }
+
+        const prevStatus = zone.lastStatus;
+        const prevRatio = zone.currentRatio;
+        const prevPixels = zone.currentPixels || 0;
+
+        zone.currentRatio = result.ratio;
+        zone.currentPixels = result.redPixels;
+        zone.detectedLocations = result.alertLocations || [];
+
+        if (result.isAlert) {
+          zone.lastStatus = 'alert';
+
+          // Tình huống 1: Mới xuất hiện sự cố (Chuyển từ Bình thường -> Báo động)
+          const isNewAlertTransition = prevStatus !== 'alert';
+
+          // Tình huống 2: Phát hiện có thêm icon lỗi mới xuất hiện ở vị trí khác (Số pixel đỏ tăng > 40px)
+          const isSignificantIncrease = (result.redPixels - prevPixels) > 40;
+
+          const speakLocationName = result.locationText || zone.name;
+
+          handleTriggerAlert(
+            zone,
+            result.message,
+            canvas.toDataURL('image/jpeg', 0.85),
+            speakLocationName,
+            isNewAlertTransition || isSignificantIncrease
+          );
+        } else {
+          zone.lastStatus = 'normal';
+          // Khi vùng đã quay về Bình thường, xoá thời gian cooldown cũ để lần lỗi tiếp theo báo ngay!
+          lastAlertTimes.current[zone.id] = 0;
+        }
+
+        if (prevStatus !== zone.lastStatus || Math.abs((prevRatio || 0) - result.ratio) > 0.01 || prevPixels !== result.redPixels) {
+          updated = true;
+        }
+      });
+
+      if (updated) {
+        setZones([...zones]);
+      }
+    } catch (err) {
+      console.warn('Detection cycle error:', err);
     }
   };
 
