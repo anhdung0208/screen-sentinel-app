@@ -1,4 +1,4 @@
-// Web Audio API & Speech Synthesis Sound Generator
+// Web Audio API Sound Generator
 class SoundAlertManager {
   constructor() {
     this.audioCtx = null;
@@ -24,9 +24,7 @@ class SoundAlertManager {
     if (!this.audioCtx) return;
 
     const ctx = this.audioCtx;
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
+    if (ctx.state === 'suspended') ctx.resume();
 
     const now = ctx.currentTime;
     const vol = Math.max(0.1, Math.min(volume, 1.0));
@@ -37,18 +35,19 @@ class SoundAlertManager {
       const gain = ctx.createGain();
 
       osc.type = 'sine';
-      const noteTime = now + index * 0.12;
+      const noteTime = now + index * 0.15;
 
       osc.frequency.setValueAtTime(freq, noteTime);
 
-      gain.gain.setValueAtTime(vol * 0.5, noteTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.8);
+      gain.gain.setValueAtTime(0.001, noteTime);
+      gain.gain.linearRampToValueAtTime(vol * 0.6, noteTime + 0.04);
+      gain.gain.linearRampToValueAtTime(0.001, noteTime + 1.0);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start(noteTime);
-      osc.stop(noteTime + 0.85);
+      osc.stop(noteTime + 1.05);
     });
   }
 
@@ -58,9 +57,7 @@ class SoundAlertManager {
     if (!this.audioCtx) return;
 
     const ctx = this.audioCtx;
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
+    if (ctx.state === 'suspended') ctx.resume();
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -75,8 +72,9 @@ class SoundAlertManager {
       osc.frequency.linearRampToValueAtTime(650, now + i + 0.4);
     }
 
-    gain.gain.setValueAtTime(vol * 0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + durationMs / 1000);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(vol * 0.6, now + 0.05);
+    gain.gain.linearRampToValueAtTime(0.001, now + durationMs / 1000);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -86,14 +84,12 @@ class SoundAlertManager {
   }
 
   // 3. Tiếng Beep ngắt quãng (Rõ tiếng & Đậm âm)
-  playBeep(count = 3, freq = 880, volume = 0.8) {
+  playBeep(count = 4, freq = 900, volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
 
     const ctx = this.audioCtx;
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
+    if (ctx.state === 'suspended') ctx.resume();
 
     const now = ctx.currentTime;
     const vol = Math.max(0.1, Math.min(volume, 1.0));
@@ -106,8 +102,9 @@ class SoundAlertManager {
       const startT = now + i * 0.22;
       osc.frequency.setValueAtTime(freq, startT);
 
-      gain.gain.setValueAtTime(vol * 0.4, startT);
-      gain.gain.exponentialRampToValueAtTime(0.001, startT + 0.15);
+      gain.gain.setValueAtTime(0.001, startT);
+      gain.gain.linearRampToValueAtTime(vol * 0.5, startT + 0.02);
+      gain.gain.linearRampToValueAtTime(0.001, startT + 0.15);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -117,39 +114,13 @@ class SoundAlertManager {
     }
   }
 
-  // 4. Giọng nói Tiếng Việt đọc tên vị trí lỗi (Web Speech API)
-  speakText(text, volume = 0.8) {
-    if (!('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'vi-VN';
-      utterance.volume = Math.max(0.1, Math.min(volume, 1.0));
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.warn('Speech synthesis error:', e);
-    }
-  }
-
-  // Phát âm thanh theo loại lựa chọn
-  playSound(type = 'voice', volume = 0.8, zoneName = '') {
+  // Phát âm thanh báo động
+  playSound(type = 'chime', volume = 0.8) {
     this.initContext();
-
-    if (type === 'voice') {
-      const locationText = zoneName
-        ? `Cảnh báo sự cố tại ${zoneName}`
-        : 'Cảnh báo phát hiện sự cố';
-      
-      this.playChime(volume);
-      setTimeout(() => {
-        this.speakText(locationText, volume);
-      }, 350);
-    } else if (type === 'siren') {
+    if (type === 'siren') {
       this.playSiren(2500, volume);
     } else if (type === 'beep') {
-      this.playBeep(3, 880, volume);
+      this.playBeep(4, 900, volume);
     } else {
       this.playChime(volume);
     }

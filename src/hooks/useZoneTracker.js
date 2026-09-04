@@ -112,8 +112,8 @@ export function useZoneTracker({ isCapturing, videoRef, zones, setZones, setting
     if (!forceAlert && now - lastTime < cooldownMs) return;
     lastAlertTimes.current[zone.id] = now;
 
-    // Phát âm thanh hoặc ĐỌC GIỌNG NÓI ĐỌC TÊN VỊ TRÍ LỖI
-    soundManager.playSound(settings.soundType || 'voice', (settings.volume || 80) / 100, zone.name);
+    // Phát âm thanh báo động (Chime, Siren, Beep)
+    soundManager.playSound(settings.soundType || 'chime', (settings.volume || 80) / 100);
 
     // Toast cảnh báo
     toast.error(`\u{1F6A8} ${zone.name}: ${reason}`, { duration: 5000 });

@@ -1,11 +1,11 @@
 import React from 'react';
-import { Settings, Volume2, Clock, RefreshCw, Music, VolumeX } from 'lucide-react';
+import { Settings, Volume2, Clock, RefreshCw, Music } from 'lucide-react';
 import { soundManager } from '../utils/audioAlert';
 import toast from 'react-hot-toast';
 
 export default function SettingsPanel({ settings, setSettings }) {
   const handleTestSound = () => {
-    soundManager.playSound(settings.soundType || 'voice', (settings.volume || 80) / 100, 'Tornado');
+    soundManager.playSound(settings.soundType || 'chime', (settings.volume || 80) / 100);
     toast.success('Đang phát âm thanh mẫu...', { id: 'sound_test' });
   };
 
@@ -83,12 +83,12 @@ export default function SettingsPanel({ settings, setSettings }) {
           <p className="text-[10px] text-slate-500 mt-1">Khi 1 vùng bị lỗi, hệ thống sẽ tạm dừng báo động lại vùng đó trong thời gian này để tránh bị phiền.</p>
         </div>
 
-        {/* Row 3: Âm thanh báo động & Giọng nói đọc tên vị trí */}
+        {/* Row 3: Âm thanh báo động & Âm lượng */}
         <div className="pt-1 border-t border-slate-800 space-y-2">
           <div>
             <label className="text-slate-300 font-medium mb-1 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Music className="w-3.5 h-3.5 text-purple-400" /> Cảnh báo Âm thanh &amp; Giọng nói:
+                <Music className="w-3.5 h-3.5 text-purple-400" /> Loại âm thanh cảnh báo:
               </span>
               <button
                 onClick={handleTestSound}
@@ -98,12 +98,11 @@ export default function SettingsPanel({ settings, setSettings }) {
               </button>
             </label>
             <select
-              value={settings.soundType || 'voice'}
+              value={settings.soundType || 'chime'}
               onChange={(e) => setSettings({ ...settings, soundType: e.target.value })}
               className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
-              <option value="voice">🗣️ Giọng nói đọc tên vị trí lỗi (VD: "Cảnh báo sự cố tại Tornado") [Khuyên dùng]</option>
-              <option value="chime">🔔 Chuông ngân vang nhẹ nhàng</option>
+              <option value="chime">🔔 Chuông ngân vang nhẹ nhàng (Khuyên dùng)</option>
               <option value="siren">🚨 Còi hú báo động công nghiệp</option>
               <option value="beep">🔊 Tiếng Beep ngắt quãng</option>
             </select>

@@ -42,7 +42,7 @@ export default function App() {
     const savedVol = Number(localStorage.getItem('sentinel_vol') || '80');
     const savedCooldownMin = Number(localStorage.getItem('sentinel_cooldown_min') || '5');
     const savedScanSec = Number(localStorage.getItem('sentinel_scan_sec') || '10');
-    const savedSoundType = localStorage.getItem('sentinel_sound_type') || 'voice';
+    const savedSoundType = localStorage.getItem('sentinel_sound_type') || 'chime';
     return {
       volume: savedVol,
       cooldownMin: savedCooldownMin,
