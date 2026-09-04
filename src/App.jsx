@@ -10,12 +10,19 @@ import { useScreenCapture } from './hooks/useScreenCapture';
 import { useZoneTracker } from './hooks/useZoneTracker';
 
 export default function App() {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [currentPath, setCurrentPath] = useState(
+    () => window.location.pathname + window.location.hash + window.location.search
+  );
 
   useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname);
+    const handlePopState = () =>
+      setCurrentPath(window.location.pathname + window.location.hash + window.location.search);
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
   const { stream, isCapturing, videoRef, startCapture, stopCapture } = useScreenCapture();
@@ -55,8 +62,13 @@ export default function App() {
     settings,
   });
 
-  // Neu dang o duong dan /test thi hien thi trang TestSimulator
-  if (currentPath === '/test') {
+  // Kiểm tra nếu đang ở trang test (/test hoặc #test hoặc ?page=test)
+  const isTestPage =
+    currentPath.includes('/test') ||
+    currentPath.includes('#test') ||
+    currentPath.includes('test');
+
+  if (isTestPage) {
     return <TestSimulator />;
   }
 
