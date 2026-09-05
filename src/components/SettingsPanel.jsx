@@ -127,14 +127,36 @@ export default function SettingsPanel({ settings, setSettings }) {
               onChange={(e) => setSettings({ ...settings, soundType: e.target.value })}
               className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 cursor-pointer font-medium"
             >
-              <option value="voice">🗣️ Chuông Ding + Đọc giọng nói Tiếng Việt [Khuyên dùng]</option>
-              <option value="voice_airport">🎙️ Chuông Sân bay + Đọc giọng nói Tiếng Việt</option>
-              <option value="airport">✈️ Chuông Sân bay 2 nốt (Ding-Dong ấm áp)</option>
-              <option value="marimba">🪵 Chuông Gỗ Marimba / Kalimba (4 nốt êm dịu, không giật mình)</option>
-              <option value="radar">📡 Radar Sonar Pulse (Xung công nghệ nhẹ nhàng)</option>
-              <option value="chime">🔔 Chuông Ngân 4 nốt (Thanh thoát du dương)</option>
-              <option value="soft_beep">🔊 Tiếng Beep mềm mại (3 nhịp êm tai)</option>
-              <option value="siren">🚨 Còi hú công nghiệp (Âm lượng lớn)</option>
+              <optgroup label="🗣️ Giọng Nói Tiếng Việt (Thông Minh)">
+                <option value="voice">🔔 Chuông Ding + Đọc giọng nói (VD: "Ding! Cảnh báo sự cố tại...") [Khuyên dùng]</option>
+                <option value="voice_airport">✈️ Chuông Sân bay + Đọc giọng nói (Ding-Dong! Cảnh báo...)</option>
+                <option value="voice_marimba">🪵 Chuông Gỗ Marimba + Đọc giọng nói</option>
+                <option value="voice_only">📢 Chỉ đọc giọng nói trực tiếp (Không kèm chuông)</option>
+              </optgroup>
+
+              <optgroup label="🍃 Chuông Nhẹ Nhàng & Thư Giãn (Không Giật Mình)">
+                <option value="marimba">🪵 Chuông Gỗ Marimba / Kalimba (4 nốt êm dịu)</option>
+                <option value="airport">✈️ Chuông Sân bay 2 nốt (Ding-Dong ấm áp)</option>
+                <option value="crystal_glass">💎 Chuông Pha Lê Thủy Tinh (Trong vắt, lấp lánh)</option>
+                <option value="zen_bowl">🧘 Chuông Thiền Tĩnh Tâm (432Hz trầm ấm, thư thái)</option>
+                <option value="harp">🎻 Đàn Harp 5 nốt (Bay bổng, mượt mà)</option>
+                <option value="chime">🔔 Chuông Ngân 4 nốt (Thanh thoát du dương)</option>
+                <option value="elevator">🛗 Chuông Thang Máy Khách Sạn (Ding Sol ngân dài)</option>
+              </optgroup>
+
+              <optgroup label="🚀 Âm Thanh Công Nghệ & Hiện Đại">
+                <option value="radar">📡 Radar Sonar Pulse (Xung công nghệ 2 nhịp)</option>
+                <option value="cyber">🤖 Cyber Matrix Pop (Giao diện tương lai)</option>
+                <option value="double_ping">🎯 Double Ping iOS Style (2 tiếng ping ấm)</option>
+                <option value="gaming">🎮 Gaming Quest / Level Up (Sinh động, vui tươi)</option>
+              </optgroup>
+
+              <optgroup label="🚨 Cảnh Báo Chuyên Nghiệp & Khẩn Cấp">
+                <option value="soft_beep">🔊 Tiếng Beep mềm mại (3 nhịp sóng Sine êm tai)</option>
+                <option value="pulsar">💓 Nhịp Dập Cảnh Báo (Urgent Heartbeat trầm ấm)</option>
+                <option value="radio">📻 Tín hiệu Bộ đàm / Roger Beep (Phong cách quân sự)</option>
+                <option value="siren">🚨 Còi hú công nghiệp (Âm lượng lớn)</option>
+              </optgroup>
             </select>
           </div>
 
