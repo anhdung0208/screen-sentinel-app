@@ -18,7 +18,7 @@ class SoundAlertManager {
     }
   }
 
-  // 1. Tiếng chuông 'Ding!' nhẹ nhàng 1 cái làm tín hiệu báo hiệu
+  // 1. Tiếng chuông 'Ding!' nhẹ nhàng trong trẻo
   playDing(volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -37,7 +37,7 @@ class SoundAlertManager {
 
     gain.gain.setValueAtTime(0.001, now);
     gain.gain.linearRampToValueAtTime(vol * 0.7, now + 0.03);
-    gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -46,7 +46,76 @@ class SoundAlertManager {
     osc.stop(now + 0.55);
   }
 
-  // 2. Âm thanh Chuông ngân 3 nốt (Chime / Bell)
+  // 2. Âm thanh Chuông sân bay / Phát thanh viên 2 nốt (Airport Ding-Dong)
+  playAirportChime(volume = 0.8) {
+    this.initContext();
+    if (!this.audioCtx) return;
+
+    const ctx = this.audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const vol = Math.max(0.1, Math.min(volume, 1.0));
+    // Nốt F#5 (739.99Hz) -> D5 (587.33Hz) kinh điển
+    const notes = [
+      { freq: 739.99, delay: 0.0, dur: 0.6 },
+      { freq: 587.33, delay: 0.35, dur: 0.9 },
+    ];
+
+    notes.forEach(({ freq, delay, dur }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      const noteTime = now + delay;
+      osc.frequency.setValueAtTime(freq, noteTime);
+
+      gain.gain.setValueAtTime(0.001, noteTime);
+      gain.gain.linearRampToValueAtTime(vol * 0.7, noteTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + dur);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(noteTime);
+      osc.stop(noteTime + dur + 0.05);
+    });
+  }
+
+  // 3. Chuông gỗ Marimba / Kalimba ấm áp 4 nốt (Cực kỳ dễ chịu, không giật mình)
+  playMarimba(volume = 0.8) {
+    this.initContext();
+    if (!this.audioCtx) return;
+
+    const ctx = this.audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const vol = Math.max(0.1, Math.min(volume, 1.0));
+    // Chuỗi nốt ấm C5 -> E5 -> G5 -> C6
+    const freqs = [523.25, 659.25, 783.99, 1046.5];
+
+    freqs.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle'; // Âm sắc gỗ mộc mạc
+      const noteTime = now + idx * 0.12;
+      osc.frequency.setValueAtTime(freq, noteTime);
+
+      gain.gain.setValueAtTime(0.001, noteTime);
+      gain.gain.linearRampToValueAtTime(vol * 0.6, noteTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.6);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(noteTime);
+      osc.stop(noteTime + 0.65);
+    });
+  }
+
+  // 4. Âm thanh Chuông ngân 3 nốt (Chime / Bell)
   playChime(volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -69,17 +138,80 @@ class SoundAlertManager {
 
       gain.gain.setValueAtTime(0.001, noteTime);
       gain.gain.linearRampToValueAtTime(vol * 0.6, noteTime + 0.04);
-      gain.gain.linearRampToValueAtTime(0.001, noteTime + 1.0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.8);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start(noteTime);
-      osc.stop(noteTime + 1.05);
+      osc.stop(noteTime + 0.85);
     });
   }
 
-  // 3. Còi hú báo động công nghiệp (Siren)
+  // 5. Radar Ping Hiện Đại (Futuristic Sonar Pulse - 2 nhịp êm tai)
+  playRadarPulse(volume = 0.8) {
+    this.initContext();
+    if (!this.audioCtx) return;
+
+    const ctx = this.audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const vol = Math.max(0.1, Math.min(volume, 1.0));
+
+    [0, 0.28].forEach((delay) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      const t = now + delay;
+      osc.frequency.setValueAtTime(950, t);
+      osc.frequency.exponentialRampToValueAtTime(450, t + 0.22);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(vol * 0.65, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(t);
+      osc.stop(t + 0.28);
+    });
+  }
+
+  // 6. Tiếng Beep nhẹ nhàng ngắt quãng (Soft Beep)
+  playSoftBeep(count = 3, volume = 0.8) {
+    this.initContext();
+    if (!this.audioCtx) return;
+
+    const ctx = this.audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const vol = Math.max(0.1, Math.min(volume, 1.0));
+
+    for (let i = 0; i < count; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine'; // Dùng sine thay vì square để không bị chói gắt
+      const startT = now + i * 0.22;
+      osc.frequency.setValueAtTime(800, startT);
+
+      gain.gain.setValueAtTime(0.001, startT);
+      gain.gain.linearRampToValueAtTime(vol * 0.6, startT + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startT + 0.16);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startT);
+      osc.stop(startT + 0.18);
+    }
+  }
+
+  // 7. Còi hú báo động công nghiệp (Siren)
   playSiren(durationMs = 2500, volume = 0.8) {
     this.initContext();
     if (!this.audioCtx) return;
@@ -111,38 +243,7 @@ class SoundAlertManager {
     osc.stop(now + durationMs / 1000);
   }
 
-  // 4. Tiếng Beep ngắt quãng (Rõ tiếng & Đậm âm)
-  playBeep(count = 4, freq = 900, volume = 0.8) {
-    this.initContext();
-    if (!this.audioCtx) return;
-
-    const ctx = this.audioCtx;
-    if (ctx.state === 'suspended') ctx.resume();
-
-    const now = ctx.currentTime;
-    const vol = Math.max(0.1, Math.min(volume, 1.0));
-
-    for (let i = 0; i < count; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'square';
-      const startT = now + i * 0.22;
-      osc.frequency.setValueAtTime(freq, startT);
-
-      gain.gain.setValueAtTime(0.001, startT);
-      gain.gain.linearRampToValueAtTime(vol * 0.5, startT + 0.02);
-      gain.gain.linearRampToValueAtTime(0.001, startT + 0.15);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(startT);
-      osc.stop(startT + 0.16);
-    }
-  }
-
-  // 5. Giọng nói Tiếng Việt đọc tên vị trí lỗi (Web Speech API)
+  // 8. Giọng nói Tiếng Việt đọc tên vị trí lỗi (Web Speech API)
   speakText(text, volume = 0.8) {
     if (!('speechSynthesis' in window)) return;
     try {
@@ -176,14 +277,32 @@ class SoundAlertManager {
       setTimeout(() => {
         this.speakText(textToSpeak, volume);
       }, 450);
+    } else if (type === 'voice_airport') {
+      const textToSpeak = locationText
+        ? `Cảnh báo, phát hiện lỗi tại ${locationText}`
+        : 'Cảnh báo phát hiện sự cố';
+      
+      this.playAirportChime(volume);
+      setTimeout(() => {
+        this.speakText(textToSpeak, volume);
+      }, 900);
+    } else if (type === 'airport') {
+      this.playAirportChime(volume);
+    } else if (type === 'marimba') {
+      this.playMarimba(volume);
+    } else if (type === 'radar') {
+      this.playRadarPulse(volume);
+    } else if (type === 'chime') {
+      this.playChime(volume);
+    } else if (type === 'soft_beep' || type === 'beep') {
+      this.playSoftBeep(3, volume);
     } else if (type === 'siren') {
       this.playSiren(2500, volume);
-    } else if (type === 'beep') {
-      this.playBeep(4, 900, volume);
     } else {
-      this.playChime(volume);
+      this.playMarimba(volume);
     }
   }
 }
 
 export const soundManager = new SoundAlertManager();
+
